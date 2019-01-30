@@ -206,7 +206,7 @@ def run():
 	# You'll need a GPU with at least 10 teraFLOPS to train on.
 	#  https://www.cityscapes-dataset.com/
 
-	with tf.Session() as session:
+	with tf.Session() as sess:
 		# Path to vgg model
 		vgg_path = os.path.join(data_dir, 'vgg')
 		
@@ -222,7 +222,7 @@ def run():
 		
 		# Returns the three layers, keep probability and input layer from \ 
 		# the vgg architecture
-		image_input, keep_prob, layer3, layer4, layer7 = load_vgg(session, 
+		image_input, keep_prob, layer3, layer4, layer7 = load_vgg(sess, 
 															vgg_path)
 		
 		# The resulting network architecture from adding a decoder on top of \ 
@@ -236,26 +236,62 @@ def run():
 		#              to correctly label the pixels
         # - cross_entropy_loss: function outputting the cost which we 
 		#           are minimizing, lower cost should yield higher accuracy
-		logits, train_op, cross_entropy_loss = optimize(model_output, 
-												  correct_label, learning_rate, 
-												  num_classes)
+#		logits, train_op, cross_entropy_loss = optimize(model_output, 
+#												  correct_label, learning_rate, 
+#												  num_classes)
+		logits = tf.reshape(model_output, (-1, num_classes), 
+					  name="fcn_logits")
+		correct_label_reshaped = tf.reshape(correct_label, (-1, num_classes))
+		
+		# Calculate distance from actual labels using cross entropy
+		cross_entropy = tf.nn.softmax_cross_entropy_with_logits(
+				logits=logits, labels=correct_label_reshaped[:])
+		
+		# Take mean for total loss
+		loss_op = tf.reduce_mean(cross_entropy, name="fcn_loss")
+		
+		# The model implements this operation to find the weights/parameters 
+		# that would yield correct pixel labels
+		train_op = tf.train.AdamOptimizer(learning_rate=learning_rate).\
+					minimize(loss_op, name="fcn_train_op")
+		
+		
+		# Write summary
+		tf.summary.scalar('loss', loss_op)
 		
 		# Initialize all variables
-		session.run(tf.global_variables_initializer())
-		session.run(tf.local_variables_initializer())
+		sess.run(tf.global_variables_initializer())
+		sess.run(tf.local_variables_initializer())
 		
+		# Initialize some parameters
+		
+		# Print this notice when done building model
 		print("Model build successful, starting training")
 		
-		# TODO: Train NN using the train_nn function
 		# Train the neural network
-		train_nn(session, EPOCHS, BATCH_SIZE, get_batches_fn, 
-                 train_op, cross_entropy_loss, image_input,
-                 correct_label, keep_prob, learning_rate)
+#		train_nn(session, EPOCHS, BATCH_SIZE, get_batches_fn, 
+#                 train_op, loss_op, image_input,
+#                 correct_label, keep_prob, learning_rate)
+		keep_prob_value = 0.5
+		learning_rate_value = 0.001
 		
-		# TODO: Save inference data using helper.save_inference_samples
-		# Run the model with the dev images and save each painted output 
-		# image (roads painted green) - we will modify this for layout analysis
-		helper.save_inference_samples(runs_dir, dev_dir, session, image_shape, 
+		for epoch in range(EPOCHS):
+			# Create function to get batches
+			total_loss = 0 # we will eliminate this one
+			for X_batch, gt_batch in get_batches_fn(BATCH_SIZE):
+				loss, _ = sess.run([loss_op, train_op], 
+						   feed_dict = {image_input: X_batch, 
+								      correct_label: gt_batch,
+									  keep_prob: keep_prob_value, 
+									  learning_rate:learning_rate_value})
+				total_loss += loss;
+				
+			print("EPOCH {} ...".format(epoch + 1))
+			print("Loss = {:.3f}".format(total_loss))
+			print()
+		
+		# Save inference data using helper.save_inference_samples
+		helper.save_inference_samples(runs_dir, dev_dir, sess, image_shape, 
 								logits, keep_prob, image_input)
 		
 		# TensorBoard: save the computation graph to a TensorBoard summary 
