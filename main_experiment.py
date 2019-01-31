@@ -189,6 +189,8 @@ def run():
 	train_gt_dir = './Small_Data/train_gt/'
 	dev_dir = './Small_Data/dev/'
 	runs_dir = './runs'
+	log_dir = 'logs'
+	
 	#   tests.test_for_kitti_dataset(data_dir)
 	EPOCHS = 40
 	BATCH_SIZE = 8
@@ -215,7 +217,8 @@ def run():
 											 image_shape, num_classes)
 	
 	# Load the vgg model and weights into tf.session sess and use 
-	# image_input, keep_prob, layer3, layer4, and layer7 
+	# image_input, keep_prob, layer3, layer4, and layer7 tensor and operations
+	# to build following layers
 	image_input, keep_prob, layer3, layer4, layer7 = load_vgg(sess, 
 															vgg_path)	
 	# Build layers for computation graph model
@@ -236,109 +239,34 @@ def run():
 	# BUILD SUMMARY OPERATION
 	tf.summary.scalar('loss', loss_op)
 	summary_op = tf.summary.merge_all()
+	# Write sess.graph into log_dir
+	summary_writer = tf.summary.FileWriter(log_dir, sess.graph)
 	
+	# CREATE A SAVER TO SAVE CHECKPOINT	   
+	saver = tf.train.Saver(tf.trainable_variables())
+	
+	# Print this notice when done building model
+	print("Model build successful, starting training")
 	
 	# INITIALIZE VARIABLE FOR SESSION
 	sess.run(tf.global_variables_initializer())
 	sess.run(tf.local_variables_initializer())
 
-	with tf.Session() as sess:
-		# Path to vgg model
-		vgg_path = os.path.join(data_dir, 'vgg')
-		
-		# Create function to get batches
-		get_batches_fn = helper.gen_batch_function(train_dir, train_gt_dir, 
-											 image_shape, num_classes)
-		
-		# OPTIONAL: Augment Images for better results
-		#  https://datascience.stackexchange.com/questions/5224/ \
-		#  how-to-prepare-augment-images-for-neural-network
-		
-		# TODO: Build NN using load_vgg, layers, and optimize function
-		
-		# Returns the three layers, keep probability and input layer from \ 
-		# the vgg architecture
-		image_input, keep_prob, layer3, layer4, layer7 = load_vgg(sess, 
-															vgg_path)
-		
-		# The resulting network architecture from adding a decoder on top of \ 
-		# the given vgg model
-		model_output = layers(layer3, layer4, layer7, num_classes)    
-		
-		# Build the output logits operation, training operation and 
-		# cost operation to be used
-		# - logits: each row represents a pixel, each column a class
-		# - train_op: function used to get the right parameters to the model 
-		#              to correctly label the pixels
-        # - cross_entropy_loss: function outputting the cost which we 
-		#           are minimizing, lower cost should yield higher accuracy
-#		logits, train_op, cross_entropy_loss = optimize(model_output, 
-#												  correct_label, learning_rate, 
-#												  num_classes)
-		logits = tf.reshape(model_output, (-1, num_classes), 
-					  name="fcn_logits")
-		correct_label_reshaped = tf.reshape(correct_label, (-1, num_classes))
-		
-		# Calculate distance from actual labels using cross entropy
-		cross_entropy = tf.nn.softmax_cross_entropy_with_logits(
-				logits=logits, labels=correct_label_reshaped[:])
-		
-		# Take mean for total loss
-		loss_op = tf.reduce_mean(cross_entropy, name="fcn_loss")
-		
-		# The model implements this operation to find the weights/parameters 
-		# that would yield correct pixel labels
-		train_op = tf.train.AdamOptimizer(learning_rate=learning_rate).\
-					minimize(loss_op, name="fcn_train_op")
-		
-		
-		# Write summary
-		tf.summary.scalar('loss', loss_op)
-		
-		# Initialize all variables
-		sess.run(tf.global_variables_initializer())
-		sess.run(tf.local_variables_initializer())
-		
-		# Initialize some parameters
-		
-		# Print this notice when done building model
-		print("Model build successful, starting training")
-		
-		# Train the neural network
-#		train_nn(session, EPOCHS, BATCH_SIZE, get_batches_fn, 
-#                 train_op, loss_op, image_input,
-#                 correct_label, keep_prob, learning_rate)
-		keep_prob_value = 0.5
-		learning_rate_value = 0.001
-		
-		for epoch in range(EPOCHS):
-			# Create function to get batches
-			total_loss = 0 # we will eliminate this one
-			for X_batch, gt_batch in get_batches_fn(BATCH_SIZE):
-				loss, _ = sess.run([loss_op, train_op], 
+	# TRAIN MODEL
+	for epoch in range(EPOCHS):
+		for X_batch, gt_batch in get_batches_fn(BATCH_SIZE):
+			loss, _ = sess.run([loss_op, train_op], 
 						   feed_dict = {image_input: X_batch, 
 								      correct_label: gt_batch,
-									  keep_prob: keep_prob_value, 
-									  learning_rate:learning_rate_value})
-				total_loss += loss;
-				
-			print("EPOCH {} ...".format(epoch + 1))
-			print("Loss = {:.3f}".format(total_loss))
-			print()
-		
-		# Save inference data using helper.save_inference_samples
-		helper.save_inference_samples(runs_dir, dev_dir, sess, image_shape, 
-								logits, keep_prob, image_input)
-		
-		# TensorBoard: save the computation graph to a TensorBoard summary 
-		# file as follows:
-		writer = tf.summary.FileWriter('.')
-		writer.add_graph(tf.get_default_graph())
-		writer.flush()
-		
-		
-		print("All done!")
-		# OPTIONAL: Apply the trained model to a video
+									  keep_prob: 0.5, 
+									  learning_rate:0.001})
+	
+	
+	# ASSESS THE TRAINED MODEL ON DEV DATASET
+	helper.save_inference_samples(runs_dir, dev_dir, sess, image_shape, 
+							   logits, keep_prob, image_input)
+	
+	print("All done!")
 
 
 if __name__ == '__main__':
