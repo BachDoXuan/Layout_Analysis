@@ -233,8 +233,10 @@ def run():
 	loss_op = tf.reduce_mean(cross_entropy, name="loss")
 
 	# Build minimize (optimize) operation 
+	global_step = tf.Variable(0, trainable=False)
 	train_op = tf.train.AdamOptimizer(learning_rate=learning_rate).\
-					minimize(loss_op, name="train_op")	
+					minimize(loss_op,  global_step=global_step, 
+							  name="train_op")	
 					
 	# BUILD SUMMARY OPERATION
 	tf.summary.scalar('loss', loss_op)
@@ -255,11 +257,17 @@ def run():
 	# TRAIN MODEL
 	for epoch in range(EPOCHS):
 		for X_batch, gt_batch in get_batches_fn(BATCH_SIZE):
-			loss, _ = sess.run([loss_op, train_op], 
-						   feed_dict = {image_input: X_batch, 
-								      correct_label: gt_batch,
-									  keep_prob: 0.5, 
-									  learning_rate:0.001})
+			loss, _, summary_str, step = sess.run([loss_op, train_op, 
+										   summary_op, global_step], 
+										   feed_dict = {image_input: X_batch, 
+									       correct_label: gt_batch, 
+										   keep_prob: 0.5, 
+										   learning_rate:0.001})
+			print('Step:', step, "Epoch:", epoch + 1, 'Loss:', loss)
+		
+		# Calculate train accuracy and dev accuracy after each epoch
+		
+		summary_writer.add_summary(summary_str, global_step = step)
 	
 	
 	# ASSESS THE TRAINED MODEL ON DEV DATASET
