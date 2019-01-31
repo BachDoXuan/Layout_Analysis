@@ -176,14 +176,14 @@ def run():
 	num_classes = 6
 	# We resize PRImA dataset into 320x224 images for our model
 	image_shape = (320, 224)  
-	data_dir = './Small_Data'
-	train_dir = './Small_Data/train/'
-	train_gt_dir = './Small_Data/train_gt/'
-	dev_dir = './Small_Data/dev/'
+	data_dir = './Data'
+	train_dir = './Data/train/'
+	train_gt_dir = './Data/train_gt/'
+	dev_dir = './Data/dev/'
 	runs_dir = './runs'
 	#   tests.test_for_kitti_dataset(data_dir)
 	EPOCHS = 40
-	BATCH_SIZE = 8
+	BATCH_SIZE = 16
 #	DROPOUT = 0.75
 	correct_label = tf.placeholder(tf.float32, [None, image_shape[0], 
 												image_shape[1], num_classes])
@@ -252,9 +252,9 @@ def run():
 		
 		# TensorBoard: save the computation graph to a TensorBoard summary 
 		# file as follows:
-		writer = tf.summary.FileWriter('.')
-		writer.add_graph(tf.get_default_graph())
-		writer.flush()
+#		writer = tf.summary.FileWriter('.')
+#		writer.add_graph(tf.get_default_graph())
+#		writer.flush()
 		
 		
 		print("All done!")
