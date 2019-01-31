@@ -193,18 +193,54 @@ def run():
 	EPOCHS = 40
 	BATCH_SIZE = 8
 #	DROPOUT = 0.75
+	
+	# BUILD VARIABLES FOR INPUTS OF COMPUTATION GRAPH MODEL
 	correct_label = tf.placeholder(tf.float32, [None, image_shape[0], 
 												image_shape[1], num_classes])
 	learning_rate = tf.placeholder(tf.float32)
 	keep_prob = tf.placeholder(tf.float32)
+
+	# BUILD SESSION
+	sess = tf.Session()
 	
+	# BUILD COMPUTATION GRAPH MODEL	(named fcn model)
 	# Download pretrained vgg model
 	helper.maybe_download_pretrained_vgg(data_dir)
+	
+	# Path to vgg model
+	vgg_path = os.path.join(data_dir, 'vgg')
+	
+	# Create function to generate batches of training data to train model
+	get_batches_fn = helper.gen_batch_function(train_dir, train_gt_dir, 
+											 image_shape, num_classes)
+	
+	# Load the vgg model and weights into tf.session sess and use 
+	# image_input, keep_prob, layer3, layer4, and layer7 
+	image_input, keep_prob, layer3, layer4, layer7 = load_vgg(sess, 
+															vgg_path)	
+	# Build layers for computation graph model
+	fcn11 = layers(layer3, layer4, layer7, num_classes)
+	
+	# Build loss operation with layer fcn11 and correct label
+	logits = tf.reshape(fcn11, (-1, num_classes), 
+					  name="logits")
+	correct_label_reshaped = tf.reshape(correct_label, (-1, num_classes))
+	cross_entropy = tf.nn.softmax_cross_entropy_with_logits(
+				logits=logits, labels=correct_label_reshaped[:])
+	loss_op = tf.reduce_mean(cross_entropy, name="loss")
 
-	# OPTIONAL: Train and Inference on the cityscapes dataset instead of 
-	# the Kitti dataset.
-	# You'll need a GPU with at least 10 teraFLOPS to train on.
-	#  https://www.cityscapes-dataset.com/
+	# Build minimize (optimize) operation 
+	train_op = tf.train.AdamOptimizer(learning_rate=learning_rate).\
+					minimize(loss_op, name="train_op")	
+					
+	# BUILD SUMMARY OPERATION
+	tf.summary.scalar('loss', loss_op)
+	summary_op = tf.summary.merge_all()
+	
+	
+	# INITIALIZE VARIABLE FOR SESSION
+	sess.run(tf.global_variables_initializer())
+	sess.run(tf.local_variables_initializer())
 
 	with tf.Session() as sess:
 		# Path to vgg model
