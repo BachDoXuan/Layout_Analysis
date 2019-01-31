@@ -266,6 +266,10 @@ def run():
 			print('Step:', step, "Epoch:", epoch + 1, 'Loss:', loss)
 		
 		# Calculate train accuracy and dev accuracy after each epoch
+		train_acc = calculate_accuracy(sess, train_dir, train_gt_dir)
+		dev_acc = calculate_accuracy(sess, dev_dir, dev_gt_dir)
+		print("(Epoch", epoch + 1, "/", EPOCHS ,")", "train_acc:", train_acc,\
+				"; dev_acc:", dev_acc)
 		
 		summary_writer.add_summary(summary_str, global_step = step)
 	
