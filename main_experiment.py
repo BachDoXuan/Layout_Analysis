@@ -179,26 +179,26 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op,
 
 
 def run():
-	# Clear old variables
-	tf.reset_default_graph()
-	num_classes = 6
+	NUM_CLASSES = 6
 	# We resize PRImA dataset into 320x224 images for our model
-	image_shape = (320, 224)  
-	data_dir = './Small_Data'
-	train_dir = './Small_Data/train/'
-	train_gt_dir = './Small_Data/train_gt/'
-	dev_dir = './Small_Data/dev/'
-	runs_dir = './runs'
-	log_dir = 'logs'
-	
-	#   tests.test_for_kitti_dataset(data_dir)
+	IMAGE_SHAPE = (320, 224)  
+	DATA_DIR = './Small_Data'
+	TRAIN_DIR = './Small_Data/train/'
+	TRAIN_GT_DIR = './Small_Data/train_gt/'
+	DEV_DIR = './Small_Data/dev/'
+	DEV_GT_DIR = './Small_Data/dev_gt/'
+	RUNS_DIR = './runs'
+	LOG_DIR = 'logs'
 	EPOCHS = 40
 	BATCH_SIZE = 8
 #	DROPOUT = 0.75
 	
+	# CLEAR OLD VARIABLES
+	tf.reset_default_graph()
+	
 	# BUILD VARIABLES FOR INPUTS OF COMPUTATION GRAPH MODEL
-	correct_label = tf.placeholder(tf.float32, [None, image_shape[0], 
-												image_shape[1], num_classes])
+	correct_label = tf.placeholder(tf.float32, [None, IMAGE_SHAPE[0], 
+												IMAGE_SHAPE[1], NUM_CLASSES])
 	learning_rate = tf.placeholder(tf.float32)
 	keep_prob = tf.placeholder(tf.float32)
 
@@ -207,14 +207,14 @@ def run():
 	
 	# BUILD COMPUTATION GRAPH MODEL	(named fcn model)
 	# Download pretrained vgg model
-	helper.maybe_download_pretrained_vgg(data_dir)
+	helper.maybe_download_pretrained_vgg(DATA_DIR)
 	
 	# Path to vgg model
-	vgg_path = os.path.join(data_dir, 'vgg')
+	vgg_path = os.path.join(DATA_DIR, 'vgg')
 	
 	# Create function to generate batches of training data to train model
-	get_batches_fn = helper.gen_batch_function(train_dir, train_gt_dir, 
-											 image_shape, num_classes)
+	get_batches_fn = helper.gen_batch_function(TRAIN_DIR, TRAIN_GT_DIR, 
+											 IMAGE_SHAPE, NUM_CLASSES)
 	
 	# Load the vgg model and weights into tf.session sess and use 
 	# image_input, keep_prob, layer3, layer4, and layer7 tensor and operations
@@ -222,12 +222,12 @@ def run():
 	image_input, keep_prob, layer3, layer4, layer7 = load_vgg(sess, 
 															vgg_path)	
 	# Build layers for computation graph model
-	fcn11 = layers(layer3, layer4, layer7, num_classes)
+	fcn11 = layers(layer3, layer4, layer7, NUM_CLASSES)
 	
 	# Build loss operation with layer fcn11 and correct label
-	logits = tf.reshape(fcn11, (-1, num_classes), 
+	logits = tf.reshape(fcn11, (-1, NUM_CLASSES), 
 					  name="logits")
-	correct_label_reshaped = tf.reshape(correct_label, (-1, num_classes))
+	correct_label_reshaped = tf.reshape(correct_label, (-1, NUM_CLASSES))
 	cross_entropy = tf.nn.softmax_cross_entropy_with_logits(
 				logits=logits, labels=correct_label_reshaped[:])
 	loss_op = tf.reduce_mean(cross_entropy, name="loss")
@@ -242,7 +242,7 @@ def run():
 	tf.summary.scalar('loss', loss_op)
 	summary_op = tf.summary.merge_all()
 	# Write sess.graph into log_dir
-	summary_writer = tf.summary.FileWriter(log_dir, sess.graph)
+	summary_writer = tf.summary.FileWriter(LOG_DIR, sess.graph)
 	
 	# CREATE A SAVER TO SAVE CHECKPOINT	   
 	saver = tf.train.Saver(tf.trainable_variables())
@@ -266,8 +266,10 @@ def run():
 			print('Step:', step, "Epoch:", epoch + 1, 'Loss:', loss)
 		
 		# Calculate train accuracy and dev accuracy after each epoch
-		train_acc = calculate_accuracy(sess, train_dir, train_gt_dir)
-		dev_acc = calculate_accuracy(sess, dev_dir, dev_gt_dir)
+		train_acc = helper.calculate_accuracy(sess, logits, keep_prob, image_input,
+								 TRAIN_DIR, TRAIN_GT_DIR, IMAGE_SHAPE, NUM_CLASSES)
+		dev_acc = helper.calculate_accuracy(sess, logits, keep_prob, image_input,
+							   DEV_DIR, DEV_GT_DIR, IMAGE_SHAPE, NUM_CLASSES)
 		print("(Epoch", epoch + 1, "/", EPOCHS ,")", "train_acc:", train_acc,\
 				"; dev_acc:", dev_acc)
 		
@@ -275,7 +277,7 @@ def run():
 	
 	
 	# ASSESS THE TRAINED MODEL ON DEV DATASET
-	helper.save_inference_samples(runs_dir, dev_dir, sess, image_shape, 
+	helper.save_inference_samples(RUNS_DIR, DEV_DIR, sess, IMAGE_SHAPE, 
 							   logits, keep_prob, image_input)
 	
 	print("All done!")

@@ -198,3 +198,27 @@ def save_inference_samples(runs_dir, data_dir, sess, image_shape, logits,
 	for name, image in image_outputs:
 		scipy.misc.imsave(os.path.join(output_dir, name[:-3] + "png"), 
 					image)
+
+
+def calculate_accuracy(sess, logits, keep_prob, image_input, input_dir, 
+					   input_gt_dir, num_samples = None, batch_size = 16):
+	"""
+	Calculate accuracy (the number of pixels predicted correctly over 
+	the number of pixels) and return result
+	:param sess: tensorflow sess (containing variables, computation graph,
+							   and weights)
+	:param logits: tf tensor for logits of the last layer
+	:param keep_prob: TF Placeholder for the dropout keep probability
+	:param image_input: TF Placeholder for image input
+	:param input_dir: directory for image input
+	:param input_gt_dir: directory for image groundtruth input
+	:param num_samples: the number of samples to calculate accuracy
+	:param batch_size: the size of batch to calculate accuracy over
+	"""
+	image_list = os.listdir(train_folder)
+	num_images = len(image_list)
+	
+	if num_samples is not None and num_samples < num_images:
+		mask = np.random.choice(num_images, num_samples)
+		num_images = num_samples
+		
