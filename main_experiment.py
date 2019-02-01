@@ -227,6 +227,9 @@ def run():
 	# Build loss operation with layer fcn11 and correct label
 	logits_op = tf.reshape(fcn11, (-1, NUM_CLASSES), 
 					  name="logits_op")
+	predict_label_op = tf.argmax(logits_op, axis = 1)
+	accuracy_op = tf.equal(logits_op, predict_label_op)
+	
 	correct_label_reshaped = tf.reshape(correct_label, (-1, NUM_CLASSES))
 	cross_entropy = tf.nn.softmax_cross_entropy_with_logits(
 				logits=logits_op, labels=correct_label_reshaped[:])
@@ -266,10 +269,10 @@ def run():
 			print('Step:', step, "Epoch:", epoch + 1, 'Loss:', loss)
 		
 		# Calculate train accuracy and dev accuracy after each epoch
-		train_acc = helper.calculate_accuracy(sess, logits_op, keep_prob, 
+		train_acc = helper.calculate_accuracy(sess, accuracy_op, keep_prob, 
 										image_input, TRAIN_DIR, TRAIN_GT_DIR, 
 										IMAGE_SHAPE, NUM_CLASSES)
-		dev_acc = helper.calculate_accuracy(sess, logits_op, keep_prob, 
+		dev_acc = helper.calculate_accuracy(sess, accuracy_op, keep_prob, 
 									  image_input, DEV_DIR, DEV_GT_DIR, 
 									  IMAGE_SHAPE, NUM_CLASSES)
 		print("(Epoch", epoch + 1, "/", EPOCHS ,")", "train_acc:", train_acc,\

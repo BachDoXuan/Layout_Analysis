@@ -204,7 +204,7 @@ def save_inference_samples(runs_dir, data_dir, sess, image_shape, logits,
 					image)
 
 
-def calculate_accuracy(sess, logits_op, keep_prob, image_input, input_dir, 
+def calculate_accuracy(sess, accuracy_op, keep_prob, image_input, input_dir, 
 					   input_gt_dir, image_shape, num_classes, 
 					   num_samples = None, batch_size = 16):
 	"""
@@ -244,5 +244,4 @@ def calculate_accuracy(sess, logits_op, keep_prob, image_input, input_dir,
 		# Run inference
 		logits_value = sess.run([tf.nn.softmax(logits_op)], 
 						 {keep_prob: 1.0, image_input: X_batch})
-		predicted_label = (np.argmax(logits_value[0], axis=1)).reshape(
-				image_shape[0], image_shape[1])
+		predicted_label = np.argmax(logits_value[0], axis=1)
