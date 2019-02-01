@@ -238,10 +238,13 @@ def calculate_accuracy(sess, accuracy_op, keep_prob, image_input, input_dir,
 	get_batches_fn = gen_batch_function(input_dir, input_gt_dir, image_shape,
 									 num_classes, image_list)
 	
-	label_pred = []
-	label_gt = []
+	num_accurate_pixels = 0
+	num_total_pixels = 0
 	for X_batch, gt_batch in get_batches_fn(batch_size):
 		# Run inference
-		logits_value = sess.run([tf.nn.softmax(logits_op)], 
+		accuracy = sess.run([tf.nn.softmax(accuracy_op)], 
 						 {keep_prob: 1.0, image_input: X_batch})
-		predicted_label = np.argmax(logits_value[0], axis=1)
+		num_accurate_pixels += np.sum(accuracy)
+		num_total_pixels += len(accuracy)
+		
+	return (num_accurate_pixels / num_total_pixels)
