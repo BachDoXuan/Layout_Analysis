@@ -80,16 +80,19 @@ def maybe_download_pretrained_vgg(data_dir):
 
 
 def gen_batch_function(train_folder, train_gt_folder, image_shape, 
-					   num_classes):
+					   num_classes, image_list=None):
 	"""
 	Generate function to create batches of training data
-	:param train_folder: Path to folder that contains all the train data,
-		.tif files
-	:param train_gt_folder: Path to folder that contains all the groundtruth 
-		data, .png files
-	:param image_shape: Tuple - Shape of image
-	:num_classes: int - number of classes
-	:return:
+	Params:
+		- train_folder: Path to folder that contains all the train data,
+			.tif files
+		- train_gt_folder: Path to folder that contains all the groundtruth 
+			data, .png files
+		- image_shape: Tuple - Shape of image
+		- num_classes: int - number of classes
+		- image_list: if not None, then it is a subset of images in train_folder
+	Return: a function that generates batches of image input and groundtruth 
+		input.
 	"""
 	gt_type = "png"
 	
@@ -98,8 +101,9 @@ def gen_batch_function(train_folder, train_gt_folder, image_shape,
         :param batch_size: Batch Size
         :return: Batches of training data
         """
-		# Grab image and label paths
-		image_list = os.listdir(train_folder)
+		# Grab image and label paths - maybe a subset of images and labels
+		if image_list is None:
+			image_list = os.listdir(train_folder)
 
 		# Shuffle training data
 		random.shuffle(image_list)
@@ -128,14 +132,14 @@ def gen_batch_function(train_folder, train_gt_folder, image_shape,
 	return get_batches_fn
 
 
-def gen_test_output(sess, logits, keep_prob, image_pl, data_dir, 
+def gen_test_output(sess, logits, keep_prob, image_input, data_dir, 
 					image_shape):
 	"""
 	Generate test output using the test images
 	:param sess: TF session
 	:param logits: TF Tensor for the logits
 	:param keep_prob: TF Placeholder for the dropout keep probability
-	:param image_pl: TF Placeholder for the image placeholder
+	:param image_input: TF Placeholder for the image placeholder
 	:param data_folder: Path to the folder that contains the datasets
 	:param image_shape: Tuple - Shape of image
 	:return: Output for for each test image
@@ -148,7 +152,7 @@ def gen_test_output(sess, logits, keep_prob, image_pl, data_dir,
 		# Run inference
 		im_softmax = sess.run(
 			[tf.nn.softmax(logits)],
-			{keep_prob: 1.0, image_pl: [image]})
+			{keep_prob: 1.0, image_input: [image]})
 		
 #		# Splice out second column (road), reshape output back to image_shape
 #		im_softmax = im_softmax[0][:, 1].reshape(image_shape[0], 
@@ -200,8 +204,9 @@ def save_inference_samples(runs_dir, data_dir, sess, image_shape, logits,
 					image)
 
 
-def calculate_accuracy(sess, logits, keep_prob, image_input, input_dir, 
-					   input_gt_dir, num_samples = None, batch_size = 16):
+def calculate_accuracy(sess, logits_op, keep_prob, image_input, input_dir, 
+					   input_gt_dir, image_shape, num_classes, 
+					   num_samples = None, batch_size = 16):
 	"""
 	Calculate accuracy (the number of pixels predicted correctly over 
 	the number of pixels) and return result
@@ -213,12 +218,31 @@ def calculate_accuracy(sess, logits, keep_prob, image_input, input_dir,
 	:param input_dir: directory for image input
 	:param input_gt_dir: directory for image groundtruth input
 	:param num_samples: the number of samples to calculate accuracy
-	:param batch_size: the size of batch to calculate accuracy over
+	:param batch_size: split input and input_groundtruth into batches of this
+		size to avoid using too much memory
 	"""
-	image_list = os.listdir(train_folder)
+	image_list = os.listdir(input_dir)
 	num_images = len(image_list)
 	
+	# Maybe calculate accuracy over a subset of the input data
 	if num_samples is not None and num_samples < num_images:
 		mask = np.random.choice(num_images, num_samples)
 		num_images = num_samples
+		image_list =  image_list[mask]
 		
+	# Compute predictions in batches
+	num_batches = num_images // batch_size
+	if num_images % batch_size != 0:
+		num_batches += 1
+	
+	get_batches_fn = gen_batch_function(input_dir, input_gt_dir, image_shape,
+									 num_classes, image_list)
+	
+	label_pred = []
+	label_gt = []
+	for X_batch, gt_batch in get_batches_fn(batch_size):
+		# Run inference
+		logits_value = sess.run([tf.nn.softmax(logits_op)], 
+						 {keep_prob: 1.0, image_input: X_batch})
+		predicted_label = (np.argmax(logits_value[0], axis=1)).reshape(
+				image_shape[0], image_shape[1])

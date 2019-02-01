@@ -225,12 +225,12 @@ def run():
 	fcn11 = layers(layer3, layer4, layer7, NUM_CLASSES)
 	
 	# Build loss operation with layer fcn11 and correct label
-	logits = tf.reshape(fcn11, (-1, NUM_CLASSES), 
-					  name="logits")
+	logits_op = tf.reshape(fcn11, (-1, NUM_CLASSES), 
+					  name="logits_op")
 	correct_label_reshaped = tf.reshape(correct_label, (-1, NUM_CLASSES))
 	cross_entropy = tf.nn.softmax_cross_entropy_with_logits(
-				logits=logits, labels=correct_label_reshaped[:])
-	loss_op = tf.reduce_mean(cross_entropy, name="loss")
+				logits=logits_op, labels=correct_label_reshaped[:])
+	loss_op = tf.reduce_mean(cross_entropy, name="loss_op")
 
 	# Build minimize (optimize) operation 
 	global_step = tf.Variable(0, trainable=False)
@@ -244,7 +244,7 @@ def run():
 	# Write sess.graph into log_dir
 	summary_writer = tf.summary.FileWriter(LOG_DIR, sess.graph)
 	
-	# CREATE A SAVER TO SAVE CHECKPOINT	   
+	# CREATE A SAVER TO SAVE CHECKPOINTS OF TRAINED WEIGHTS   
 	saver = tf.train.Saver(tf.trainable_variables())
 	
 	# Print this notice when done building model
@@ -266,10 +266,12 @@ def run():
 			print('Step:', step, "Epoch:", epoch + 1, 'Loss:', loss)
 		
 		# Calculate train accuracy and dev accuracy after each epoch
-		train_acc = helper.calculate_accuracy(sess, logits, keep_prob, image_input,
-								 TRAIN_DIR, TRAIN_GT_DIR, IMAGE_SHAPE, NUM_CLASSES)
-		dev_acc = helper.calculate_accuracy(sess, logits, keep_prob, image_input,
-							   DEV_DIR, DEV_GT_DIR, IMAGE_SHAPE, NUM_CLASSES)
+		train_acc = helper.calculate_accuracy(sess, logits_op, keep_prob, 
+										image_input, TRAIN_DIR, TRAIN_GT_DIR, 
+										IMAGE_SHAPE, NUM_CLASSES)
+		dev_acc = helper.calculate_accuracy(sess, logits_op, keep_prob, 
+									  image_input, DEV_DIR, DEV_GT_DIR, 
+									  IMAGE_SHAPE, NUM_CLASSES)
 		print("(Epoch", epoch + 1, "/", EPOCHS ,")", "train_acc:", train_acc,\
 				"; dev_acc:", dev_acc)
 		
@@ -278,7 +280,7 @@ def run():
 	
 	# ASSESS THE TRAINED MODEL ON DEV DATASET
 	helper.save_inference_samples(RUNS_DIR, DEV_DIR, sess, IMAGE_SHAPE, 
-							   logits, keep_prob, image_input)
+							   logits_op, keep_prob, image_input)
 	
 	print("All done!")
 
