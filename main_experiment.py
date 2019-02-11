@@ -142,7 +142,7 @@ def run():
 	
 	# Create function to generate batches of training data to train model
 	get_batches_fn = helper.gen_batch_function(TRAIN_DIR, TRAIN_GT_DIR, 
-											 IMAGE_SHAPE, NUM_CLASSES, None)
+											 IMAGE_SHAPE, NUM_CLASSES)
 	
 	# Load the vgg model and weights into tf.session sess and use 
 	# image_input, keep_prob, layer3, layer4, and layer7 tensor and operations

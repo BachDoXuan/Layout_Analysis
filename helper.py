@@ -80,7 +80,7 @@ def maybe_download_pretrained_vgg(data_dir):
 
 
 def gen_batch_function(train_folder, train_gt_folder, image_shape, 
-					   num_classes, image_list):
+					   num_classes, image_list_input=None):
 	"""
 	Generate function to create batches of training data
 	Params:
@@ -102,8 +102,10 @@ def gen_batch_function(train_folder, train_gt_folder, image_shape,
         :return: Batches of training data
         """
 		# Grab image and label paths - maybe a subset of images and labels
-		if image_list is None:
+		if image_list_input is None:
 			image_list = os.listdir(train_folder)
+		else:
+			image_list = image_list_input
 
 		# Shuffle training data
 		random.shuffle(image_list)
