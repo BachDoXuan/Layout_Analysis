@@ -142,7 +142,7 @@ def run():
 	
 	# Create function to generate batches of training data to train model
 	get_batches_fn = helper.gen_batch_function(TRAIN_DIR, TRAIN_GT_DIR, 
-											 IMAGE_SHAPE, NUM_CLASSES)
+											 IMAGE_SHAPE, NUM_CLASSES, None)
 	
 	# Load the vgg model and weights into tf.session sess and use 
 	# image_input, keep_prob, layer3, layer4, and layer7 tensor and operations
@@ -155,10 +155,11 @@ def run():
 	# Build loss operation with layer fcn11 and correct label
 	logits_op = tf.reshape(fcn11, (-1, NUM_CLASSES), 
 					  name="logits_op")
-	predict_label_op = tf.argmax(logits_op, axis = 1)
-	accuracy_op = tf.equal(logits_op, predict_label_op)
+	predict_label_op = tf.cast(tf.argmax(logits_op, axis = 1), tf.float32)
 	
 	correct_label_reshaped = tf.reshape(correct_label, (-1, NUM_CLASSES))
+	accuracy_op = tf.equal(predict_label_op, correct_label_reshaped)
+	
 	cross_entropy = tf.nn.softmax_cross_entropy_with_logits(
 				logits=logits_op, labels=correct_label_reshaped[:])
 	loss_op = tf.reduce_mean(cross_entropy, name="loss_op")

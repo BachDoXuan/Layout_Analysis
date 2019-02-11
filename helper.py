@@ -80,7 +80,7 @@ def maybe_download_pretrained_vgg(data_dir):
 
 
 def gen_batch_function(train_folder, train_gt_folder, image_shape, 
-					   num_classes, image_list=None):
+					   num_classes, image_list):
 	"""
 	Generate function to create batches of training data
 	Params:
