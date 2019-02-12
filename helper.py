@@ -249,6 +249,7 @@ def calculate_accuracy(sess, accuracy_op, keep_prob, image_input,
 						 {keep_prob: 1.0, image_input: X_batch, \
 							correct_label: gt_batch})
 		print(type(accuracy))
+		print("accuracy:", accuracy)
 		num_accuracy = np.sum(accuracy)
 		len_accuracy = len(accuracy)
 		print("num_accuracy:", num_accuracy, "; len_accuracy:", len_accuracy)
