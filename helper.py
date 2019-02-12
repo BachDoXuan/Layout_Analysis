@@ -245,7 +245,7 @@ def calculate_accuracy(sess, accuracy_op, keep_prob, image_input,
 	num_total_pixels = 0
 	for X_batch, gt_batch in get_batches_fn(batch_size):
 		# Run inference
-		accuracy = sess.run([accuracy_op], 
+		accuracy = sess.run(accuracy_op, 
 						 {keep_prob: 1.0, image_input: X_batch, \
 							correct_label: gt_batch})
 		print(type(accuracy))
