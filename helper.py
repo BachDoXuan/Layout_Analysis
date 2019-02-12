@@ -90,7 +90,7 @@ def gen_batch_function(train_folder, train_gt_folder, image_shape,
 			data, .png files
 		- image_shape: Tuple - Shape of image
 		- num_classes: int - number of classes
-		- image_list: if not None, then it is a subset of images in train_folder
+		- image_list_input: if not None, then it is a subset of images in train_folder
 	Return: a function that generates batches of image input and groundtruth 
 		input.
 	"""

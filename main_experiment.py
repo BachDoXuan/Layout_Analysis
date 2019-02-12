@@ -118,7 +118,7 @@ def run():
 	RUNS_DIR = './runs'
 	LOG_DIR = 'logs'
 	EPOCHS = 40
-	BATCH_SIZE = 8
+	BATCH_SIZE = 4
 #	DROPOUT = 0.75
 	
 	# CLEAR OLD VARIABLES
