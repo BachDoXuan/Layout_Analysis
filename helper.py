@@ -248,7 +248,10 @@ def calculate_accuracy(sess, accuracy_op, keep_prob, image_input,
 		accuracy = sess.run([accuracy_op], 
 						 {keep_prob: 1.0, image_input: X_batch, \
 							correct_label: gt_batch})
-		num_accurate_pixels += np.sum(accuracy)
-		num_total_pixels += len(accuracy)
+		num_accuracy = np.sum(accuracy)
+		len_accuracy = len(accuracy)
+		print("num_accuracy:", num_accuracy, "; len_accuracy:", len_accuracy)
+		num_accurate_pixels += num_accuracy
+		num_total_pixels += len_accuracy
 		
 	return (num_accurate_pixels / num_total_pixels)

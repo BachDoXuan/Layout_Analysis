@@ -117,7 +117,7 @@ def run():
 	DEV_GT_DIR = './Small_Data/dev_gt/'
 	RUNS_DIR = './runs'
 	LOG_DIR = 'logs'
-	EPOCHS = 40
+	EPOCHS = 2
 	BATCH_SIZE = 4
 #	DROPOUT = 0.75
 	
