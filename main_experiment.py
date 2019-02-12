@@ -199,10 +199,12 @@ def run():
 		
 		# Calculate train accuracy and dev accuracy after each epoch
 		train_acc = helper.calculate_accuracy(sess, accuracy_op, keep_prob, 
-										image_input, TRAIN_DIR, TRAIN_GT_DIR, 
+										image_input, correct_label,
+										TRAIN_DIR, TRAIN_GT_DIR, 
 										IMAGE_SHAPE, NUM_CLASSES)
 		dev_acc = helper.calculate_accuracy(sess, accuracy_op, keep_prob, 
-									  image_input, DEV_DIR, DEV_GT_DIR, 
+									  image_input, correct_label,
+									  DEV_DIR, DEV_GT_DIR, 
 									  IMAGE_SHAPE, NUM_CLASSES)
 		print("(Epoch", epoch + 1, "/", EPOCHS ,")", "train_acc:", train_acc,\
 				"; dev_acc:", dev_acc)

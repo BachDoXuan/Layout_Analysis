@@ -206,9 +206,10 @@ def save_inference_samples(runs_dir, data_dir, sess, image_shape, logits,
 					image)
 
 
-def calculate_accuracy(sess, accuracy_op, keep_prob, image_input, input_dir, 
+def calculate_accuracy(sess, accuracy_op, keep_prob, image_input, 
+					   correct_label, input_dir, 
 					   input_gt_dir, image_shape, num_classes, 
-					   num_samples = None, batch_size = 16):
+					   num_samples = None, batch_size = 4):
 	"""
 	Calculate accuracy (the number of pixels predicted correctly over 
 	the number of pixels) and return result
@@ -244,8 +245,9 @@ def calculate_accuracy(sess, accuracy_op, keep_prob, image_input, input_dir,
 	num_total_pixels = 0
 	for X_batch, gt_batch in get_batches_fn(batch_size):
 		# Run inference
-		accuracy = sess.run([tf.nn.softmax(accuracy_op)], 
-						 {keep_prob: 1.0, image_input: X_batch})
+		accuracy = sess.run([accuracy_op], 
+						 {keep_prob: 1.0, image_input: X_batch, \
+							correct_label: gt_batch})
 		num_accurate_pixels += np.sum(accuracy)
 		num_total_pixels += len(accuracy)
 		
