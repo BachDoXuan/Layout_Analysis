@@ -163,7 +163,7 @@ def run():
 	
 	accuracy_op = tf.equal(predict_label_op, 
 						tf.cast(tf.argmax(correct_label_reshaped, axis = 1), 
-						  dtype = tf.uint8))
+						  dtype = tf.int64))
 	
 	cross_entropy = tf.nn.softmax_cross_entropy_with_logits(
 				logits=logits_op, labels=correct_label_reshaped[:])
