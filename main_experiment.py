@@ -110,15 +110,15 @@ def run():
 	NUM_CLASSES = 6
 	# We resize PRImA dataset into 320x224 images for our model
 	IMAGE_SHAPE = (320, 224)  
-	DATA_DIR = './Small_Data'
-	TRAIN_DIR = './Small_Data/train/'
-	TRAIN_GT_DIR = './Small_Data/train_gt/'
-	DEV_DIR = './Small_Data/dev/'
-	DEV_GT_DIR = './Small_Data/dev_gt/'
+	DATA_DIR = './Data'
+	TRAIN_DIR = './Data/train/'
+	TRAIN_GT_DIR = './Data/train_gt/'
+	DEV_DIR = './Data/dev/'
+	DEV_GT_DIR = './Data/dev_gt/'
 	RUNS_DIR = './runs'
 	LOG_DIR = 'logs'
 	EPOCHS = 20
-	BATCH_SIZE = 1
+	BATCH_SIZE = 4
 #	DROPOUT = 0.75
 	
 	# CLEAR OLD VARIABLES
