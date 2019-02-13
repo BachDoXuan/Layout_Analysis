@@ -183,7 +183,7 @@ def run():
 	runs_dir = './runs'
 	#   tests.test_for_kitti_dataset(data_dir)
 	EPOCHS = 40
-	BATCH_SIZE = 16
+	BATCH_SIZE = 8
 #	DROPOUT = 0.75
 	correct_label = tf.placeholder(tf.float32, [None, image_shape[0], 
 												image_shape[1], num_classes])
